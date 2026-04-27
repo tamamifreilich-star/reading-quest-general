@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reading Quest General</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="setup-screen" class="screen">
+        <div class="card">
+          <p class="eyebrow">Parent setup</p>
+          <h1>Reading Quest</h1>
+          <p class="muted">
+            Set up the player once, then the child can use the app.
+          </p>
+
+          <label class="field">
+            <span>Child name</span>
+            <input id="setup-name" type="text" placeholder="Charlie" />
+          </label>
+
+          <label class="field">
+            <span>Reward name</span>
+            <input id="setup-reward" type="text" placeholder="Apple Watch SE" />
+          </label>
+
+          <label class="field">
+            <span>Goal points</span>
+            <input id="setup-goal" type="number" min="1" value="39900" />
+          </label>
+
+          <label class="field">
+            <span>Speech language</span>
+            <select id="setup-language">
+              <option value="en-AU">English (Australia)</option>
+              <option value="en-US">English (US)</option>
+              <option value="en-GB">English (UK)</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Theme</span>
+            <select id="setup-theme">
+              <option value="minecraft">Minecraft</option>
+            </select>
+          </label>
+
+          <button id="setup-save" class="button button-primary">
+            Save setup
+          </button>
+        </div>
+      </section>
+
+      <section id="home-screen" class="screen hidden">
+        <div class="status-row">
+          <div id="saved-status" class="saved-pill">Saved on this device</div>
+          <button id="parent-settings-button" class="button button-ghost button-small">
+            Parent Settings
+          </button>
+        </div>
+
+        <div class="card hero-card">
+          <p class="eyebrow">Reading Quest</p>
+          <h1 id="player-name">Player</h1>
+          <p id="player-title" class="title-text">Wood Pickaxe</p>
+
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-label">Total XP</span>
+              <strong id="total-xp">0</strong>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Books</span>
+              <strong id="books-count">0</strong>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Streak</span>
+              <strong id="streak-count">0</strong>
+            </div>
+          </div>
+
+          <div class="progress-group">
+            <div class="progress-meta">
+              <span>Level progress</span>
+              <span id="level-progress-text">0 / 500</span>
+            </div>
+            <div class="progress-bar">
+              <div id="level-progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="progress-group">
+            <div class="progress-meta">
+              <span id="reward-label">Reward progress</span>
+              <span id="reward-progress-text">0 / 39900</span>
+            </div>
+            <div class="progress-bar progress-bar-secondary">
+              <div id="reward-progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="home-actions">
+            <button id="log-read-button" class="button button-primary button-large">
+              Log Today's Read
+            </button>
+            <button id="bookshelf-button" class="button button-secondary">
+              My Bookshelf
+            </button>
+            <button id="stats-button" class="button button-secondary">
+              My Stats
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="log-screen" class="screen hidden">
+        <div class="card">
+          <div class="screen-header">
+            <button data-home class="button button-ghost">Home</button>
+            <h2>Today's Read</h2>
+          </div>
+
+          <label class="field">
+            <span>Book</span>
+            <div class="input-row">
+              <input id="book-title" type="text" placeholder="Book title" />
+              <button id="book-mic" class="button button-icon" type="button">
+                Mic
+              </button>
+            </div>
+          </label>
+
+          <div class="quick-books">
+            <button id="last-book-button" class="button button-secondary button-small" type="button">
+              Last Book
+            </button>
+            <div id="recent-books" class="recent-books"></div>
+          </div>
+
+          <div class="field">
+            <span>Enjoyment</span>
+            <div id="enjoyment-options" class="emoji-row">
+              <button class="emoji-button" data-enjoyment="1" type="button">💀</button>
+              <button class="emoji-button" data-enjoyment="2" type="button">😐</button>
+              <button class="emoji-button" data-enjoyment="3" type="button">🙂</button>
+              <button class="emoji-button" data-enjoyment="4" type="button">⭐</button>
+              <button class="emoji-button" data-enjoyment="5" type="button">💎</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <span>Speak</span>
+            <button id="comment-mic" class="button mic-button" type="button">
+              Start speaking
+            </button>
+            <textarea
+              id="comment-text"
+              rows="4"
+              placeholder="Speech text will appear here"
+            ></textarea>
+          </div>
+
+          <label class="checkbox-row">
+            <input id="finished-book" type="checkbox" />
+            <span>Finished Book (+500 XP)</span>
+          </label>
+
+          <button id="save-log-button" class="button button-primary button-large">
+            GET XP
+          </button>
+        </div>
+      </section>
+
+      <section id="result-screen" class="screen hidden">
+        <div class="card result-card">
+          <p class="eyebrow">Saved!</p>
+          <h2 id="result-xp">+0 XP</h2>
+          <p id="result-total">Total XP: 0</p>
+          <p id="result-level">Level 1</p>
+          <p id="result-next">Next level: 500 XP</p>
+          <div id="result-saved-status" class="saved-pill">Saved on this device</div>
+          <button id="result-home-button" class="button button-primary">
+            Home
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <template id="recent-book-template">
+      <button class="button button-secondary button-small recent-book" type="button"></button>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

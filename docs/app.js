@@ -1,0 +1,455 @@
+const STORAGE_KEY = "readingQuest_general_v1";
+const APP_VERSION = "general-mvp-0.2";
+
+const LEVELS = [
+  { level: 1, xp: 0, title: "Wood Pickaxe" },
+  { level: 2, xp: 500, title: "Stone Miner" },
+  { level: 3, xp: 1500, title: "Iron Crafter" },
+  { level: 4, xp: 3000, title: "Gold Explorer" },
+  { level: 5, xp: 5000, title: "Redstone Reader" },
+];
+
+const XP_RULES = {
+  baseLog: 100,
+  speechComment: 150,
+  newBook: 100,
+  finishedBook: 500,
+};
+
+const state = loadState();
+let currentScreen = state.config?.initialSetupDone ? "home" : "setup";
+let currentRecognition = null;
+let currentCommentMode = "typed";
+
+const els = {
+  setupScreen: document.getElementById("setup-screen"),
+  homeScreen: document.getElementById("home-screen"),
+  logScreen: document.getElementById("log-screen"),
+  resultScreen: document.getElementById("result-screen"),
+  setupName: document.getElementById("setup-name"),
+  setupReward: document.getElementById("setup-reward"),
+  setupGoal: document.getElementById("setup-goal"),
+  setupLanguage: document.getElementById("setup-language"),
+  setupTheme: document.getElementById("setup-theme"),
+  setupSave: document.getElementById("setup-save"),
+  savedStatus: document.getElementById("saved-status"),
+  parentSettingsButton: document.getElementById("parent-settings-button"),
+  playerName: document.getElementById("player-name"),
+  playerTitle: document.getElementById("player-title"),
+  totalXp: document.getElementById("total-xp"),
+  booksCount: document.getElementById("books-count"),
+  streakCount: document.getElementById("streak-count"),
+  levelProgressText: document.getElementById("level-progress-text"),
+  levelProgressFill: document.getElementById("level-progress-fill"),
+  rewardLabel: document.getElementById("reward-label"),
+  rewardProgressText: document.getElementById("reward-progress-text"),
+  rewardProgressFill: document.getElementById("reward-progress-fill"),
+  logReadButton: document.getElementById("log-read-button"),
+  bookshelfButton: document.getElementById("bookshelf-button"),
+  statsButton: document.getElementById("stats-button"),
+  bookTitle: document.getElementById("book-title"),
+  bookMic: document.getElementById("book-mic"),
+  lastBookButton: document.getElementById("last-book-button"),
+  recentBooks: document.getElementById("recent-books"),
+  enjoymentButtons: Array.from(document.querySelectorAll(".emoji-button")),
+  commentMic: document.getElementById("comment-mic"),
+  commentText: document.getElementById("comment-text"),
+  finishedBook: document.getElementById("finished-book"),
+  saveLogButton: document.getElementById("save-log-button"),
+  resultXp: document.getElementById("result-xp"),
+  resultTotal: document.getElementById("result-total"),
+  resultLevel: document.getElementById("result-level"),
+  resultNext: document.getElementById("result-next"),
+  resultSavedStatus: document.getElementById("result-saved-status"),
+  resultHomeButton: document.getElementById("result-home-button"),
+  homeButtons: Array.from(document.querySelectorAll("[data-home]")),
+  recentBookTemplate: document.getElementById("recent-book-template"),
+};
+
+const draft = {
+  enjoyment: 0,
+};
+
+init();
+
+function init() {
+  bindEvents();
+  fillSetupFields();
+  renderAll();
+}
+
+function bindEvents() {
+  els.setupSave.addEventListener("click", saveSetup);
+  els.parentSettingsButton.addEventListener("click", () => showScreen("setup"));
+  els.logReadButton.addEventListener("click", () => {
+    resetDraft();
+    renderLogScreen();
+    showScreen("log");
+  });
+  els.bookshelfButton.addEventListener("click", () =>
+    window.alert("My Bookshelf is coming in the next step.")
+  );
+  els.statsButton.addEventListener("click", () =>
+    window.alert("My Stats is coming in the next step.")
+  );
+  els.bookMic.addEventListener("click", () => startSpeech("book"));
+  els.commentMic.addEventListener("click", () => startSpeech("comment"));
+  els.lastBookButton.addEventListener("click", useLastBook);
+  els.saveLogButton.addEventListener("click", saveLog);
+  els.resultHomeButton.addEventListener("click", () => showScreen("home"));
+
+  els.homeButtons.forEach((button) => {
+    button.addEventListener("click", () => showScreen("home"));
+  });
+
+  els.enjoymentButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      draft.enjoyment = Number(button.dataset.enjoyment);
+      renderEnjoyment();
+    });
+  });
+}
+
+function defaultState() {
+  return {
+    appVersion: APP_VERSION,
+    player: {
+      name: "Player",
+      totalXp: 0,
+      level: 1,
+      title: "Wood Pickaxe",
+      bestStreak: 0,
+      currentStreak: 0,
+      lastLogDate: "",
+    },
+    logs: [],
+    books: [],
+    config: {
+      initialSetupDone: false,
+      goalName: "Apple Watch SE",
+      goalPoints: 39900,
+      speechLang: "en-AU",
+      theme: "minecraft",
+      xpRules: { ...XP_RULES },
+    },
+  };
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return defaultState();
+
+  try {
+    return { ...defaultState(), ...JSON.parse(raw) };
+  } catch (error) {
+    console.error("Failed to parse localStorage:", error);
+    return defaultState();
+  }
+}
+
+function persistState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (els.savedStatus) {
+    els.savedStatus.textContent = "Saved on this device";
+  }
+  if (els.resultSavedStatus) {
+    els.resultSavedStatus.textContent = "Saved on this device";
+  }
+}
+
+function saveSetup() {
+  state.player.name = (els.setupName.value || "Player").trim();
+  state.config.goalName = (els.setupReward.value || "Reward").trim();
+  state.config.goalPoints = Number(els.setupGoal.value || 0) || 39900;
+  state.config.speechLang = els.setupLanguage.value;
+  state.config.theme = els.setupTheme.value;
+  state.config.initialSetupDone = true;
+
+  updatePlayerLevel();
+  persistState();
+  renderAll();
+  showScreen("home");
+}
+
+function fillSetupFields() {
+  els.setupName.value = state.player.name || "";
+  els.setupReward.value = state.config.goalName || "";
+  els.setupGoal.value = state.config.goalPoints || 39900;
+  els.setupLanguage.value = state.config.speechLang || "en-AU";
+  els.setupTheme.value = state.config.theme || "minecraft";
+}
+
+function showScreen(name) {
+  currentScreen = name;
+
+  const map = {
+    setup: els.setupScreen,
+    home: els.homeScreen,
+    log: els.logScreen,
+    result: els.resultScreen,
+  };
+
+  Object.values(map).forEach((screen) => screen.classList.add("hidden"));
+  map[name].classList.remove("hidden");
+
+  if (name === "home") renderHomeScreen();
+  if (name === "log") renderLogScreen();
+  if (name === "result") renderResultScreen();
+  if (name === "setup") fillSetupFields();
+}
+
+function renderAll() {
+  renderHomeScreen();
+  renderLogScreen();
+  renderResultScreen();
+  showScreen(currentScreen);
+}
+
+function renderHomeScreen() {
+  updatePlayerLevel();
+  els.playerName.textContent = state.player.name || "Player";
+  els.playerTitle.textContent = state.player.title;
+  els.totalXp.textContent = formatNumber(state.player.totalXp);
+  els.booksCount.textContent = formatNumber(state.books.length);
+  els.streakCount.textContent = formatNumber(state.player.currentStreak);
+  els.rewardLabel.textContent = `${state.config.goalName} progress`;
+
+  const levelInfo = getCurrentLevelInfo();
+  const nextLevel = getNextLevelInfo();
+  const progressIntoLevel = state.player.totalXp - levelInfo.xp;
+  const progressNeeded = nextLevel ? nextLevel.xp - levelInfo.xp : 1;
+  const progressPercent = nextLevel
+    ? Math.min(100, (progressIntoLevel / progressNeeded) * 100)
+    : 100;
+
+  els.levelProgressText.textContent = nextLevel
+    ? `${formatNumber(progressIntoLevel)} / ${formatNumber(progressNeeded)}`
+    : "MAX";
+  els.levelProgressFill.style.width = `${progressPercent}%`;
+
+  const rewardPercent = Math.min(
+    100,
+    (state.player.totalXp / state.config.goalPoints) * 100
+  );
+  els.rewardProgressText.textContent = `${formatNumber(
+    state.player.totalXp
+  )} / ${formatNumber(state.config.goalPoints)}`;
+  els.rewardProgressFill.style.width = `${rewardPercent}%`;
+}
+
+function renderLogScreen() {
+  renderEnjoyment();
+  renderRecentBooks();
+  const lastBook = state.books[state.books.length - 1]?.title || "";
+  els.lastBookButton.disabled = !lastBook;
+  els.lastBookButton.textContent = lastBook ? `Last Book: ${lastBook}` : "Last Book";
+}
+
+function renderResultScreen(lastXp = 0) {
+  const nextLevel = getNextLevelInfo();
+  els.resultXp.textContent = `+${formatNumber(lastXp)} XP`;
+  els.resultTotal.textContent = `Total XP: ${formatNumber(state.player.totalXp)}`;
+  els.resultLevel.textContent = `Level ${state.player.level} - ${state.player.title}`;
+  els.resultNext.textContent = nextLevel
+    ? `Next level: ${formatNumber(nextLevel.xp)} XP`
+    : "Top level reached";
+}
+
+function renderEnjoyment() {
+  els.enjoymentButtons.forEach((button) => {
+    button.classList.toggle(
+      "selected",
+      Number(button.dataset.enjoyment) === draft.enjoyment
+    );
+  });
+}
+
+function renderRecentBooks() {
+  const titles = [...new Set(state.logs.map((log) => log.bookTitle).filter(Boolean))]
+    .reverse()
+    .slice(0, 3);
+
+  els.recentBooks.innerHTML = "";
+  titles.forEach((title) => {
+    const node = els.recentBookTemplate.content.firstElementChild.cloneNode(true);
+    node.textContent = title;
+    node.addEventListener("click", () => {
+      els.bookTitle.value = title;
+    });
+    els.recentBooks.appendChild(node);
+  });
+}
+
+function resetDraft() {
+  draft.enjoyment = 0;
+  currentCommentMode = "typed";
+  els.bookTitle.value = "";
+  els.commentText.value = "";
+  els.finishedBook.checked = false;
+}
+
+function useLastBook() {
+  const lastBook = state.books[state.books.length - 1]?.title;
+  if (lastBook) els.bookTitle.value = lastBook;
+}
+
+function startSpeech(target) {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    window.alert("Speech recognition is not supported in this browser.");
+    return;
+  }
+
+  if (currentRecognition) {
+    currentRecognition.stop();
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = state.config.speechLang || "en-AU";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  currentRecognition = recognition;
+
+  if (target === "comment") {
+    els.commentMic.textContent = "Listening...";
+  } else {
+    els.bookMic.textContent = "Listening...";
+  }
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.trim();
+
+    if (target === "book") {
+      els.bookTitle.value = transcript;
+    } else {
+      currentCommentMode = "speech";
+      els.commentText.value = els.commentText.value
+        ? `${els.commentText.value} ${transcript}`
+        : transcript;
+    }
+  };
+
+  recognition.onend = () => {
+    currentRecognition = null;
+    els.commentMic.textContent = "Start speaking";
+    els.bookMic.textContent = "Mic";
+  };
+
+  recognition.start();
+}
+
+function saveLog() {
+  const bookTitle = els.bookTitle.value.trim();
+  const comment = els.commentText.value.trim();
+  const finishedBook = els.finishedBook.checked;
+
+  if (!bookTitle) {
+    window.alert("Please add a book title.");
+    return;
+  }
+
+  if (!draft.enjoyment) {
+    window.alert("Please choose an enjoyment level.");
+    return;
+  }
+
+  let xpEarned = state.config.xpRules.baseLog;
+  if (comment) xpEarned += state.config.xpRules.speechComment;
+
+  const existingBook = state.books.find((book) => book.title === bookTitle);
+  if (!existingBook) xpEarned += state.config.xpRules.newBook;
+  if (finishedBook) xpEarned += state.config.xpRules.finishedBook;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const log = {
+    id: `log_${Date.now()}`,
+    date: today,
+    bookTitle,
+    enjoyment: draft.enjoyment,
+    comment,
+    commentMode: comment ? currentCommentMode : "none",
+    xpEarned,
+    finishedBook,
+    timestamp: new Date().toISOString(),
+  };
+
+  state.logs.push(log);
+  updateBooks(bookTitle, today, finishedBook);
+  updateStreak(today);
+  state.player.totalXp += xpEarned;
+  updatePlayerLevel();
+  persistState();
+  renderAll();
+  renderResultScreen(xpEarned);
+  showScreen("result");
+
+  window.setTimeout(() => {
+    if (currentScreen === "result") showScreen("home");
+  }, 2500);
+}
+
+function updateBooks(bookTitle, today, finishedBook) {
+  const book = state.books.find((item) => item.title === bookTitle);
+
+  if (!book) {
+    state.books.push({
+      title: bookTitle,
+      status: finishedBook ? "finished" : "reading",
+      startDate: today,
+      endDate: finishedBook ? today : "",
+      logCount: 1,
+    });
+    return;
+  }
+
+  book.logCount += 1;
+  if (finishedBook) {
+    book.status = "finished";
+    book.endDate = today;
+  }
+}
+
+function updateStreak(today) {
+  if (state.player.lastLogDate === today) return;
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayText = yesterday.toISOString().slice(0, 10);
+
+  if (!state.player.lastLogDate) {
+    state.player.currentStreak = 1;
+  } else if (state.player.lastLogDate === yesterdayText) {
+    state.player.currentStreak += 1;
+  } else {
+    state.player.currentStreak = 1;
+  }
+
+  state.player.bestStreak = Math.max(
+    state.player.bestStreak,
+    state.player.currentStreak
+  );
+  state.player.lastLogDate = today;
+}
+
+function updatePlayerLevel() {
+  const current = getCurrentLevelInfo();
+  state.player.level = current.level;
+  state.player.title = current.title;
+}
+
+function getCurrentLevelInfo() {
+  return LEVELS.reduce((acc, level) => {
+    if (state.player.totalXp >= level.xp) return level;
+    return acc;
+  }, LEVELS[0]);
+}
+
+function getNextLevelInfo() {
+  return LEVELS.find((level) => level.xp > state.player.totalXp) || null;
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat().format(value);
+}
