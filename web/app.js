@@ -433,13 +433,21 @@ function getBookshelfData() {
       const bookLogs = state.logs.filter(
         (log) => log.bookTitle === book.title
       );
+      const logDates = bookLogs.map((log) => log.date).sort();
+      const firstDate = logDates[0] || book.startDate || "";
+      const lastDate = logDates[logDates.length - 1] || book.endDate || book.startDate || "";
+      const finished = book.status === "finished";
       return {
-        ...book,
-        sessions: bookLogs.length,
+        title: book.title,
+        sessions: bookLogs.length || book.logCount || 0,
         totalXp: bookLogs.reduce((sum, log) => sum + (log.xpEarned || 0), 0),
+        firstDate,
+        lastDate,
+        endDate: book.endDate || "",
+        finished,
       };
     })
-    .sort((a, b) => (b.lastReadDate || "").localeCompare(a.lastReadDate || ""));
+    .sort((a, b) => (b.lastDate || "").localeCompare(a.lastDate || ""));
 }
 
 function getLast7DaysXp() {
@@ -493,10 +501,12 @@ function renderBookshelfScreen() {
 
     const dates = document.createElement("p");
     dates.className = "book-card-dates";
-    if (book.firstReadDate === book.lastReadDate) {
-      dates.textContent = `Read on ${book.lastReadDate}`;
+    if (!book.firstDate && !book.lastDate) {
+      dates.textContent = "No log yet";
+    } else if (book.firstDate === book.lastDate) {
+      dates.textContent = `Read on ${book.lastDate}`;
     } else {
-      dates.textContent = `${book.firstReadDate} → ${book.lastReadDate}`;
+      dates.textContent = `${book.firstDate} → ${book.lastDate}`;
     }
     main.appendChild(dates);
 
@@ -515,7 +525,9 @@ function renderBookshelfScreen() {
 
 function renderStatsScreen() {
   const totalXp = state.player.totalXp || 0;
-  const finishedCount = state.books.filter((b) => b.finished).length;
+  const finishedCount = state.books.filter(
+    (b) => b.status === "finished"
+  ).length;
 
   els.statsTotalXp.textContent = formatNumber(totalXp);
   els.statsLevel.textContent = `${state.player.level} - ${state.player.title}`;
