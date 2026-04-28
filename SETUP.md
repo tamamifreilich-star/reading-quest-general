@@ -14,9 +14,11 @@
 | **Step 2** | General 専用の GitHub リポジトリを作る | ✅ 完了 (2026-04-27) |
 | **Step 3** | `web/` と `docs/` の骨組みを作る | ✅ 完了 (2026-04-27) |
 | **Step 4** | ローカルで動作確認する | ✅ 完了 (2026-04-27, port 8081) |
-| **Step 5** | GitHub に push する | 🟡 途中（commit 済み、push が認証待ち） |
-| **Step 6** | GitHub Pages を有効にする | ⬜ 未着手 |
-| **Step 7** | General 版の初期設定と動作確認をする | ✅ ローカルでは完了 (2026-04-27) |
+| **Step 5** | GitHub に push する | ✅ 完了 (2026-04-27) |
+| **Step 6** | GitHub Pages を有効にする | ✅ 完了 (2026-04-28, Public 化時に自動デプロイ) |
+| **Step 7** | General 版の初期設定と動作確認をする | ✅ 完了 (ローカル 2026-04-27 / 公開 URL 2026-04-28) |
+
+**🏁 全 Step 完了 — General MVP は公開済み**: https://tamamifreilich-star.github.io/reading-quest-general/
 
 ---
 
@@ -42,18 +44,35 @@
 #### Git の進捗
 - ✅ `.gitignore` 追加（`.DS_Store` などを除外）
 - ✅ `git init` / `git branch -M main` / `git add .` / `git commit -m "Initial General MVP setup"` 完了
+- ✅ Global git identity 設定（`user.name=tamamifreilich-star`, `user.email=tamamifreilich-star@users.noreply.github.com`）
+- ✅ `credential.helper=osxkeychain` を設定（macOS Keychain 連携）
+- ✅ Initial commit を新 identity で `--amend --reset-author`、SETUP.md の進捗ログも同 commit に統合
 - ✅ `git remote add origin https://github.com/tamamifreilich-star/reading-quest-general.git`
-- ⏸ `git push -u origin main` は **HTTPS 認証が未設定**のため失敗
-  - エラー: `fatal: could not read Username for 'https://github.com': Device not configured`
-  - 次の対処: 以下のいずれかで認証を通す
-    - **A.** ターミナルで対話的に push（PAT を入力）
-    - **B.** GitHub CLI (`gh`) をインストールして `gh auth login` してから push
-    - **C.** SSH 鍵を設定して remote URL を `git@github.com:...` に変更してから push
+- ✅ **`git push` 完了** — PAT で一回 push、`main -> main` 新規作成、upstream は `origin/main` に設定済み
+
+#### セキュリティメモ（重要）
+- 初回 push 時に Personal Access Token をチャットに貼ってしまったため、その PAT は **使用後ただちに Revoke 推奨**
+- 今後 push が必要になったら、新しい PAT を作って **ターミナル上で git に直接入力**（Keychain に保存される）
+- PAT・パスワードはチャット・ファイルに**絶対書かない**（git に commit されると公開される）
 
 #### 残タスク
-- [ ] Step 5: `git push` を完了させる
-- [ ] Step 6: GitHub Pages を `main` / `/docs` で有効化
-- [ ] Step 7: 公開 URL（`https://tamamifreilich-star.github.io/reading-quest-general/`）でも動作確認
+- [x] 漏洩した PAT を Revoke（2026-04-27 完了）
+- [x] リポジトリを Public に変更（2026-04-27 完了、Pages を無料で使えるようにするため）
+- [x] Step 6: GitHub Pages 有効化（**Public 化時に自動デプロイされていた**ため Save 操作不要だった、2026-04-28 確認）
+- [x] Step 6: 公開 URL の到達確認（2026-04-28 完了）
+- [x] Step 7: 公開 URL での動作確認（2026-04-28 完了）
+
+### 2026-04-28
+
+#### やったこと
+- 公開 URL `https://tamamifreilich-star.github.io/reading-quest-general/` にアクセス → Setup 画面が出ることを確認
+- Pages 設定画面に行ったところ、**Save ボタンが既に無効（変更なし）状態**だった = Public 化時に GitHub が `/docs` を自動検出し、デフォルトでデプロイ済み
+- 公開 URL での Setup → Home → Today's Read → Result の一連動作 OK
+- Home 画面右上の **Parent Settings** ボタンから設定を後から変更できることも確認
+
+#### 学び
+- GitHub Pages は、Public リポジトリで `docs/` に静的ファイルがある場合、**Pages 設定で明示的に `main` / `/docs` を選んで Save しなくても自動的にデプロイされることがある**
+- 「Save が押せない」= 「すでに同じ設定で保存済み」という意味なので、無理に Save する必要はない
 
 ---
 
@@ -292,6 +311,8 @@ git push -u origin main
    - Folder: `/docs`
 5. `Save`
 
+> **2026-04-28 メモ:** Public リポジトリで `docs/` に静的ファイルがあると、**Public 化した時点で GitHub が自動的に Pages を有効化**することがある。その場合、Pages 設定画面に行っても **Save ボタンが無効（変更なし）状態**になっており、追加操作は不要。すでに公開 URL にアクセスできるかを先に確認するのが早い。
+
 ### 公開 URL
 
 数分後に、以下のような URL が表示される。
@@ -336,12 +357,13 @@ General 版は Charlie 版と違い、初回セットアップを想定してい
 
 GitHub Pages で公開できたら、以下を改めて確認する。
 
-- [ ] `https://tamamifreilich-star.github.io/reading-quest-general/` が開く
-- [ ] Setup 画面が出る
-- [ ] Setup → Home の遷移ができる
-- [ ] Today's Read が保存できる
-- [ ] HTTPS なのでマイクも安定して動く
-- [ ] localStorage キーは `readingQuest_general_v1`
+- [x] `https://tamamifreilich-star.github.io/reading-quest-general/` が開く
+- [x] Setup 画面が出る
+- [x] Setup → Home の遷移ができる
+- [x] Today's Read が保存できる
+- [x] HTTPS なのでマイクも安定して動く
+- [x] localStorage キーは `readingQuest_general_v1`
+- [x] Home 右上の **Parent Settings** から、設定を後から変更できる
 
 ---
 
