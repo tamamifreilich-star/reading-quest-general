@@ -171,8 +171,8 @@
 - **autoplay 対応**: 初回ユーザー操作で AudioContext を resume（iOS Safari / Chrome の制約対応）
 - **シーン別実装**:
   - **XP 獲得時** → `playXpSound()`: triangle 880Hz → 1320Hz の上昇 2 音（合計 170ms）
-  - **レベルアップ時** → `playLevelUpSound()`: C5 → E5 → G5 → C6 のメジャー和音アルペジオ（合計 700ms）。XP 音は鳴らさない
-  - **Saved 時（Setup 保存）** → `playSaveSound()`: sine 660Hz 単音 180ms
+  - **レベルアップ時** → `playLevelUpSound()`: square 主体の C5→E5→G5→C6→E6→G6 高速ファンファーレ（5×90ms 階段 + 最後の G6 を 700ms 持続、C6+E6 を裏で重ねて和音レイヤー）。XP 音は鳴らさない
+  - **Saved 時（Setup 保存）** → `playSaveSound()`: sine 1046.5Hz (C6) 単音 220ms（高めでクリア）
   - ボタンタップ音は未実装（うるさい懸念）
 
 ### v2 候補（テスト販売後 / Phase 1）

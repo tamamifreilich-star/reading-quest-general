@@ -89,16 +89,22 @@ function playXpSound() {
 }
 
 function playSaveSound() {
-  playTone(660, 180, { type: "sine", volume: 0.14 });
+  playTone(1046.5, 220, { type: "sine", volume: 0.16 });
 }
 
 function playLevelUpSound() {
   playSequence([
-    { freq: 523.25, dur: 130, type: "triangle", volume: 0.2 },
-    { freq: 659.25, dur: 130, type: "triangle", volume: 0.2 },
-    { freq: 783.99, dur: 130, type: "triangle", volume: 0.2 },
-    { freq: 1046.5, dur: 320, type: "triangle", volume: 0.22 },
+    { freq: 523.25, dur: 90, type: "square", volume: 0.14 },
+    { freq: 659.25, dur: 90, type: "square", volume: 0.15 },
+    { freq: 783.99, dur: 90, type: "square", volume: 0.16 },
+    { freq: 1046.5, dur: 90, type: "square", volume: 0.18 },
+    { freq: 1318.5, dur: 90, type: "square", volume: 0.18 },
+    { freq: 1568.0, dur: 700, type: "triangle", volume: 0.22 },
   ]);
+  window.setTimeout(() => {
+    playTone(1046.5, 700, { type: "triangle", volume: 0.13 });
+    playTone(1318.5, 700, { type: "sine", volume: 0.1 });
+  }, 450);
 }
 
 const state = loadState();
