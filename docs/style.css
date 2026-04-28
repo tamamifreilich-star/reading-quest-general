@@ -29,8 +29,8 @@ body {
   padding: 20px 16px 40px;
 }
 
-.screen.hidden {
-  display: none;
+.hidden {
+  display: none !important;
 }
 
 .card {
@@ -292,10 +292,6 @@ textarea {
   margin: 0;
   font-size: 1.6rem;
   font-weight: 800;
-}
-
-.levelup-banner.hidden {
-  display: none;
 }
 
 @keyframes levelup-pop {
