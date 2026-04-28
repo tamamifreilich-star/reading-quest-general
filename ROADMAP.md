@@ -40,9 +40,9 @@
 - [x] デフォルトを General 中立化（goalName=`Reward`, goalPoints=15,000）
 - [x] 10 段階レベル + レベルアップ演出（Goal 設定に依存しない）
 - [x] **Parent Settings から全データリセットができる**（confirm 付き、子は触れない）
+- [x] **サウンド効果: XP 獲得・Saved・レベルアップで音が出る**（Web Audio 合成、Setup で ON/OFF 切替）
 - [ ] 脱文字 UI: 主要操作がアイコンで分かる（読まなくても押せる）
 - [ ] テーマが最低 **3 つ**選べる（Minecraft 含む、性別年齢偏らない）
-- [ ] サウンド効果: XP 獲得・Saved・レベルアップで音が出る
 - [ ] My Bookshelf 画面が動く（読了本の一覧が見える）
 - [ ] My Stats 画面が動く（最低限: 累計 XP / Books / Streak / 直近ログ）
 - [ ] PWA 化: ホーム画面に追加でき、アプリらしく起動する
@@ -165,13 +165,20 @@
 
 ## サウンド方針（Phase 0-4）
 
-- **音源**: フリー / CC0 ライセンスのみ使用（freesound.org / mixkit / pixabay）
-- **音量**: デフォルト中、Parent Settings で OFF にできる
-- **シーン別**:
-  - XP 獲得時: 短い「ピロッ」系
-  - レベルアップ時: 派手なファンファーレ
-  - Saved 時: ふわっと優しい音
-  - ボタンタップ時: 軽いクリック音（有無は要検証、うるさいかも）
+### v1 実装（2026-04-28 完了 / Web Audio 合成）
+- **音源**: Web Audio API のオシレーターで動的生成（音源ファイルなし、ライセンス不要）
+- **ON/OFF**: Setup 画面に `Sound effects` チェックボックス、デフォルト ON、localStorage 永続化
+- **autoplay 対応**: 初回ユーザー操作で AudioContext を resume（iOS Safari / Chrome の制約対応）
+- **シーン別実装**:
+  - **XP 獲得時** → `playXpSound()`: triangle 880Hz → 1320Hz の上昇 2 音（合計 170ms）
+  - **レベルアップ時** → `playLevelUpSound()`: C5 → E5 → G5 → C6 のメジャー和音アルペジオ（合計 700ms）。XP 音は鳴らさない
+  - **Saved 時（Setup 保存）** → `playSaveSound()`: sine 660Hz 単音 180ms
+  - ボタンタップ音は未実装（うるさい懸念）
+
+### v2 候補（テスト販売後 / Phase 1）
+- **本格音源差し替え**: フリー / CC0 ライセンス（freesound.org / mixkit / pixabay）の MP3/OGG
+- 抽象化はすでに済（`playXpSound` / `playSaveSound` / `playLevelUpSound` の中身を差し替えるだけ）
+- テーマ別サウンド（Minecraft = ブロック音、Magic Castle = キラキラ系、等）
 
 ---
 

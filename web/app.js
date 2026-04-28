@@ -24,6 +24,83 @@ const XP_RULES = {
 const DEFAULT_GOAL_POINTS = 15000;
 const DEFAULT_GOAL_NAME = "Reward";
 
+let audioCtx = null;
+
+function getAudioContext() {
+  if (audioCtx) return audioCtx;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  try {
+    audioCtx = new Ctx();
+  } catch (error) {
+    console.warn("AudioContext not available:", error);
+    return null;
+  }
+  return audioCtx;
+}
+
+function unlockAudio() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") {
+    ctx.resume().catch(() => {});
+  }
+}
+
+function playTone(frequency, durationMs, options = {}) {
+  if (!state.config.soundEnabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = options.type || "triangle";
+  osc.frequency.value = frequency;
+
+  const now = ctx.currentTime;
+  const peak = options.volume != null ? options.volume : 0.18;
+  const attack = 0.01;
+  const decay = Math.max(durationMs / 1000 - attack, 0.05);
+
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(peak, now + attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + attack + decay);
+
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + attack + decay + 0.02);
+}
+
+function playSequence(notes) {
+  if (!state.config.soundEnabled) return;
+  let delay = 0;
+  notes.forEach((note) => {
+    window.setTimeout(() => playTone(note.freq, note.dur, note), delay);
+    delay += note.dur;
+  });
+}
+
+function playXpSound() {
+  playSequence([
+    { freq: 880, dur: 70, type: "triangle", volume: 0.16 },
+    { freq: 1320, dur: 100, type: "triangle", volume: 0.16 },
+  ]);
+}
+
+function playSaveSound() {
+  playTone(660, 180, { type: "sine", volume: 0.14 });
+}
+
+function playLevelUpSound() {
+  playSequence([
+    { freq: 523.25, dur: 130, type: "triangle", volume: 0.2 },
+    { freq: 659.25, dur: 130, type: "triangle", volume: 0.2 },
+    { freq: 783.99, dur: 130, type: "triangle", volume: 0.2 },
+    { freq: 1046.5, dur: 320, type: "triangle", volume: 0.22 },
+  ]);
+}
+
 const state = loadState();
 let currentScreen = state.config?.initialSetupDone ? "home" : "setup";
 let currentRecognition = null;
@@ -39,6 +116,7 @@ const els = {
   setupGoal: document.getElementById("setup-goal"),
   setupLanguage: document.getElementById("setup-language"),
   setupTheme: document.getElementById("setup-theme"),
+  setupSound: document.getElementById("setup-sound"),
   setupSave: document.getElementById("setup-save"),
   setupReset: document.getElementById("setup-reset"),
   savedStatus: document.getElementById("saved-status"),
@@ -90,6 +168,16 @@ function init() {
 }
 
 function bindEvents() {
+  const unlockOnce = () => {
+    unlockAudio();
+    document.removeEventListener("click", unlockOnce);
+    document.removeEventListener("touchstart", unlockOnce);
+    document.removeEventListener("keydown", unlockOnce);
+  };
+  document.addEventListener("click", unlockOnce);
+  document.addEventListener("touchstart", unlockOnce);
+  document.addEventListener("keydown", unlockOnce);
+
   els.setupSave.addEventListener("click", saveSetup);
   if (els.setupReset) {
     els.setupReset.addEventListener("click", resetAllData);
@@ -144,6 +232,7 @@ function defaultState() {
       goalPoints: DEFAULT_GOAL_POINTS,
       speechLang: "en-AU",
       theme: "minecraft",
+      soundEnabled: true,
       xpRules: { ...XP_RULES },
     },
   };
@@ -154,7 +243,14 @@ function loadState() {
   if (!raw) return defaultState();
 
   try {
-    return { ...defaultState(), ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    const base = defaultState();
+    return {
+      ...base,
+      ...parsed,
+      config: { ...base.config, ...(parsed.config || {}) },
+      player: { ...base.player, ...(parsed.player || {}) },
+    };
   } catch (error) {
     console.error("Failed to parse localStorage:", error);
     return defaultState();
@@ -178,12 +274,14 @@ function saveSetup() {
     Number(els.setupGoal.value || 0) || DEFAULT_GOAL_POINTS;
   state.config.speechLang = els.setupLanguage.value;
   state.config.theme = els.setupTheme.value;
+  state.config.soundEnabled = els.setupSound ? els.setupSound.checked : true;
   state.config.initialSetupDone = true;
 
   updatePlayerLevel();
   persistState();
   renderAll();
   showScreen("home");
+  playSaveSound();
 }
 
 function fillSetupFields() {
@@ -192,6 +290,9 @@ function fillSetupFields() {
   els.setupGoal.value = state.config.goalPoints || DEFAULT_GOAL_POINTS;
   els.setupLanguage.value = state.config.speechLang || "en-AU";
   els.setupTheme.value = state.config.theme || "minecraft";
+  if (els.setupSound) {
+    els.setupSound.checked = state.config.soundEnabled !== false;
+  }
 }
 
 function resetAllData() {
@@ -430,6 +531,12 @@ function saveLog() {
   renderLogScreen();
   showScreen("result");
   renderResultScreen(xpEarned, leveledUpTo);
+
+  if (leveledUpTo) {
+    playLevelUpSound();
+  } else {
+    playXpSound();
+  }
 
   window.setTimeout(() => {
     if (currentScreen === "result") showScreen("home");
