@@ -18,17 +18,18 @@
 
           <label class="field">
             <span>Child name</span>
-            <input id="setup-name" type="text" placeholder="Charlie" />
+            <input id="setup-name" type="text" placeholder="Your child's name" />
           </label>
 
           <label class="field">
             <span>Reward name</span>
-            <input id="setup-reward" type="text" placeholder="Apple Watch SE" />
+            <input id="setup-reward" type="text" placeholder="Reward" />
           </label>
 
           <label class="field">
             <span>Goal points</span>
-            <input id="setup-goal" type="number" min="1" value="39900" />
+            <input id="setup-goal" type="number" min="1" value="15000" />
+            <small class="field-hint">~250 XP per day with speech comments. 15,000 ≈ 3 months.</small>
           </label>
 
           <label class="field">
@@ -50,6 +51,21 @@
           <button id="setup-save" class="button button-primary">
             Save setup
           </button>
+
+          <div class="danger-zone">
+            <p class="danger-zone-title">Danger zone</p>
+            <p class="danger-zone-hint">
+              This deletes the player, all logs, books, and XP on this device.
+              Only the parent should use this.
+            </p>
+            <button
+              id="setup-reset"
+              type="button"
+              class="button button-danger"
+            >
+              Reset all data
+            </button>
+          </div>
         </div>
       </section>
 
@@ -94,7 +110,7 @@
           <div class="progress-group">
             <div class="progress-meta">
               <span id="reward-label">Reward progress</span>
-              <span id="reward-progress-text">0 / 39900</span>
+              <span id="reward-progress-text">0 / 15,000</span>
             </div>
             <div class="progress-bar progress-bar-secondary">
               <div id="reward-progress-fill" class="progress-fill"></div>
@@ -175,6 +191,10 @@
 
       <section id="result-screen" class="screen hidden">
         <div class="card result-card">
+          <div id="result-levelup" class="levelup-banner hidden">
+            <p class="levelup-eyebrow">LEVEL UP!</p>
+            <h3 id="result-levelup-title">New Title</h3>
+          </div>
           <p class="eyebrow">Saved!</p>
           <h2 id="result-xp">+0 XP</h2>
           <p id="result-total">Total XP: 0</p>

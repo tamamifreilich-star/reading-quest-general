@@ -74,6 +74,30 @@
 - GitHub Pages は、Public リポジトリで `docs/` に静的ファイルがある場合、**Pages 設定で明示的に `main` / `/docs` を選んで Save しなくても自動的にデプロイされることがある**
 - 「Save が押せない」= 「すでに同じ設定で保存済み」という意味なので、無理に Save する必要はない
 
+#### Phase 0 着手（General 中立化 + 演出 + リセット）
+- `ROADMAP.md` を新規作成（Phase 0 / Phase 1 / Phase 2 + テーマ案 + サウンド方針 + 販売準備）
+- `PROJECT_PLAN.md` にレベル曲線確定版とデフォルト Goal を追記
+- **Charlie 個人情報の中立化**:
+  - `placeholder="Charlie"` → `Your child's name`
+  - `placeholder="Apple Watch SE"` → `Reward`
+  - `value="39900"` → `15000`（約 3 ヶ月で達成）+ ヒント文追加
+  - `defaultState` / `saveSetup` のフォールバック値も定数化（`DEFAULT_GOAL_NAME` / `DEFAULT_GOAL_POINTS`）
+- **10 段階レベル**:
+  - 5 段階 → 10 段階に拡張（Lv10=32,000 XP=約 6 ヶ月で到達）
+  - Lv6 = Emerald Hunter / Lv7 = Diamond Digger に入れ替え
+- **レベルアップ演出**:
+  - `saveLog` 内で before/after の `state.player.level` を比較
+  - 上がっていたら Result 画面に金色の `🎉 LEVEL UP!` バナー（CSS アニメ `levelup-pop` 付き）
+  - レベルアップ時のみ Result 画面の滞在時間を 2.5 秒 → 5 秒に延長
+  - **Goal points をどの値に設定しても**、Lv1〜10 の境界では必ず演出が出る
+- **Parent Settings からの全データリセット**:
+  - Setup 画面の最下部に Danger zone セクション追加
+  - `Reset all data` ボタン → `confirm()` ダイアログ → `localStorage.removeItem` → リロード
+  - 子は Setup に来ない（Home → Parent Settings 経由のみ）ため誤操作リスク低
+- `web/` と `docs/` 両方に反映（`bash sync-web-to-docs.sh` で同期）
+- ローカル `http://localhost:8081` で動作確認 OK
+  - リセット → Setup に新デフォルト表示 → Save → Log → レベルアップ演出を一通り確認
+
 ---
 
 ## Step 1: 新しい General 用フォルダを用意する

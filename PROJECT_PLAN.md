@@ -312,6 +312,32 @@ Total XP: 1,250
 - MVP では `typed` も同じ XP にしてよい
 - 将来、`speech` をより高くするのは Phase 2 で検討
 
+### レベル曲線（General 確定版・10 段階）
+
+XP しきい値はテーマ非依存（絶対値）。タイトル名だけがテーマで切り替わる。
+
+| Lv | 累計 XP | Minecraft 既定タイトル |
+|----|---------|------------------------|
+| 1  | 0       | Wood Pickaxe |
+| 2  | 500     | Stone Miner |
+| 3  | 1,500   | Iron Crafter |
+| 4  | 3,000   | Gold Explorer |
+| 5  | 5,000   | Redstone Reader |
+| 6  | 8,000   | Emerald Hunter |
+| 7  | 12,000  | Diamond Digger |
+| 8  | 17,000  | Netherite Knight |
+| 9  | 24,000  | Ender Master |
+| 10 | 32,000  | Dragon Slayer |
+
+Lv10 到達 ≒ 約 6 ヶ月（週 5 日ペース）。
+
+### デフォルト Goal（General 中立化）
+
+- `goalPoints`: **15,000**（約 3 ヶ月で達成イメージ）
+- `goalName`: **`Reward`**
+
+Charlie 専用の `39,900` / `Apple Watch SE` は廃止（プレースホルダー・初期値・フォールバック全箇所）。
+
 ---
 
 ## 5. データ設計アップデート

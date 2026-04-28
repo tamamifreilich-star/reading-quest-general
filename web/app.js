@@ -1,5 +1,5 @@
 const STORAGE_KEY = "readingQuest_general_v1";
-const APP_VERSION = "general-mvp-0.2";
+const APP_VERSION = "general-mvp-0.3";
 
 const LEVELS = [
   { level: 1, xp: 0, title: "Wood Pickaxe" },
@@ -7,6 +7,11 @@ const LEVELS = [
   { level: 3, xp: 1500, title: "Iron Crafter" },
   { level: 4, xp: 3000, title: "Gold Explorer" },
   { level: 5, xp: 5000, title: "Redstone Reader" },
+  { level: 6, xp: 8000, title: "Emerald Hunter" },
+  { level: 7, xp: 12000, title: "Diamond Digger" },
+  { level: 8, xp: 17000, title: "Netherite Knight" },
+  { level: 9, xp: 24000, title: "Ender Master" },
+  { level: 10, xp: 32000, title: "Dragon Slayer" },
 ];
 
 const XP_RULES = {
@@ -15,6 +20,9 @@ const XP_RULES = {
   newBook: 100,
   finishedBook: 500,
 };
+
+const DEFAULT_GOAL_POINTS = 15000;
+const DEFAULT_GOAL_NAME = "Reward";
 
 const state = loadState();
 let currentScreen = state.config?.initialSetupDone ? "home" : "setup";
@@ -32,6 +40,7 @@ const els = {
   setupLanguage: document.getElementById("setup-language"),
   setupTheme: document.getElementById("setup-theme"),
   setupSave: document.getElementById("setup-save"),
+  setupReset: document.getElementById("setup-reset"),
   savedStatus: document.getElementById("saved-status"),
   parentSettingsButton: document.getElementById("parent-settings-button"),
   playerName: document.getElementById("player-name"),
@@ -62,6 +71,8 @@ const els = {
   resultNext: document.getElementById("result-next"),
   resultSavedStatus: document.getElementById("result-saved-status"),
   resultHomeButton: document.getElementById("result-home-button"),
+  resultLevelup: document.getElementById("result-levelup"),
+  resultLevelupTitle: document.getElementById("result-levelup-title"),
   homeButtons: Array.from(document.querySelectorAll("[data-home]")),
   recentBookTemplate: document.getElementById("recent-book-template"),
 };
@@ -80,6 +91,9 @@ function init() {
 
 function bindEvents() {
   els.setupSave.addEventListener("click", saveSetup);
+  if (els.setupReset) {
+    els.setupReset.addEventListener("click", resetAllData);
+  }
   els.parentSettingsButton.addEventListener("click", () => showScreen("setup"));
   els.logReadButton.addEventListener("click", () => {
     resetDraft();
@@ -126,8 +140,8 @@ function defaultState() {
     books: [],
     config: {
       initialSetupDone: false,
-      goalName: "Apple Watch SE",
-      goalPoints: 39900,
+      goalName: DEFAULT_GOAL_NAME,
+      goalPoints: DEFAULT_GOAL_POINTS,
       speechLang: "en-AU",
       theme: "minecraft",
       xpRules: { ...XP_RULES },
@@ -159,8 +173,9 @@ function persistState() {
 
 function saveSetup() {
   state.player.name = (els.setupName.value || "Player").trim();
-  state.config.goalName = (els.setupReward.value || "Reward").trim();
-  state.config.goalPoints = Number(els.setupGoal.value || 0) || 39900;
+  state.config.goalName = (els.setupReward.value || DEFAULT_GOAL_NAME).trim();
+  state.config.goalPoints =
+    Number(els.setupGoal.value || 0) || DEFAULT_GOAL_POINTS;
   state.config.speechLang = els.setupLanguage.value;
   state.config.theme = els.setupTheme.value;
   state.config.initialSetupDone = true;
@@ -174,9 +189,25 @@ function saveSetup() {
 function fillSetupFields() {
   els.setupName.value = state.player.name || "";
   els.setupReward.value = state.config.goalName || "";
-  els.setupGoal.value = state.config.goalPoints || 39900;
+  els.setupGoal.value = state.config.goalPoints || DEFAULT_GOAL_POINTS;
   els.setupLanguage.value = state.config.speechLang || "en-AU";
   els.setupTheme.value = state.config.theme || "minecraft";
+}
+
+function resetAllData() {
+  const confirmed = window.confirm(
+    "Reset all data?\n\n" +
+      "This will delete the player, all logs, books, and XP on this device.\n" +
+      "This cannot be undone."
+  );
+  if (!confirmed) return;
+
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.error("Failed to clear localStorage:", error);
+  }
+  window.location.reload();
 }
 
 function showScreen(name) {
@@ -245,7 +276,7 @@ function renderLogScreen() {
   els.lastBookButton.textContent = lastBook ? `Last Book: ${lastBook}` : "Last Book";
 }
 
-function renderResultScreen(lastXp = 0) {
+function renderResultScreen(lastXp = 0, leveledUpTo = null) {
   const nextLevel = getNextLevelInfo();
   els.resultXp.textContent = `+${formatNumber(lastXp)} XP`;
   els.resultTotal.textContent = `Total XP: ${formatNumber(state.player.totalXp)}`;
@@ -253,6 +284,13 @@ function renderResultScreen(lastXp = 0) {
   els.resultNext.textContent = nextLevel
     ? `Next level: ${formatNumber(nextLevel.xp)} XP`
     : "Top level reached";
+
+  if (leveledUpTo) {
+    els.resultLevelup.classList.remove("hidden");
+    els.resultLevelupTitle.textContent = `Level ${leveledUpTo.level} - ${leveledUpTo.title}`;
+  } else {
+    els.resultLevelup.classList.add("hidden");
+  }
 }
 
 function renderEnjoyment() {
@@ -375,19 +413,27 @@ function saveLog() {
     timestamp: new Date().toISOString(),
   };
 
+  const previousLevel = state.player.level;
+
   state.logs.push(log);
   updateBooks(bookTitle, today, finishedBook);
   updateStreak(today);
   state.player.totalXp += xpEarned;
   updatePlayerLevel();
+
+  const leveledUpTo =
+    state.player.level > previousLevel ? getCurrentLevelInfo() : null;
+  const dwellTime = leveledUpTo ? 5000 : 2500;
+
   persistState();
-  renderAll();
-  renderResultScreen(xpEarned);
+  renderHomeScreen();
+  renderLogScreen();
   showScreen("result");
+  renderResultScreen(xpEarned, leveledUpTo);
 
   window.setTimeout(() => {
     if (currentScreen === "result") showScreen("home");
-  }, 2500);
+  }, dwellTime);
 }
 
 function updateBooks(bookTitle, today, finishedBook) {
