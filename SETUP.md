@@ -98,6 +98,30 @@
 - ローカル `http://localhost:8081` で動作確認 OK
   - リセット → Setup に新デフォルト表示 → Save → Log → レベルアップ演出を一通り確認
 
+#### Phase 0 続き: サウンド効果（Web Audio API）
+- 音声ファイル不要・**Web Audio API でリアルタイム合成**
+- Setup 画面に **Sound effects トグル**（デフォルト ON）
+- ブラウザの autoplay policy 対策で初回タップ/クリック/キー押下で AudioContext を resume
+- 3 種類のサウンド：
+  - **XP 獲得**: 三角波の 2 音上昇（A5 → E6、170ms）
+  - **レベルアップ**: 矩形波 5 音急上昇（C5→E5→G5→C6→E6, 90ms 刻み）+ G6 三角波 700ms ロング + C6/E6 重ね和音（じゃららーん）
+  - **Saved**: C6 サイン波 220ms（高め単音）
+- ブラウザキャッシュ対策として `?v=20260428d` クエリ + `Cache-Control` meta + `.hidden` グローバル化を反映済み
+
+#### Phase 0 続き: My Bookshelf / My Stats
+- これまで「Coming soon」alert だった 2 ボタンを実装
+- **My Bookshelf**:
+  - `state.books` + `state.logs` から本ごとに sessions / 累計 XP / 期間 / Finished バッジ
+  - 最終読書日が新しい順
+  - 空状態あり（"No books yet. Start with Log Today's Read."）
+- **My Stats**:
+  - サマリーグリッド: Total XP / Level / Books / Finished / Sessions / Streak / Best Streak
+  - **Last 7 days 棒グラフ**（CSS のみ、images なし）
+  - **Recent logs**（直近 5 件、本タイトル + 日付 + Finished マーク + 獲得 XP）
+- スタイル追加: `.book-card` / `.bar-chart` / `.recent-log` / `.section-heading`
+- モバイル対応: stats-summary を 2 列に
+- キャッシュバスター `?v=20260428e`
+
 ---
 
 ## Step 1: 新しい General 用フォルダを用意する

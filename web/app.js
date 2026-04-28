@@ -157,6 +157,21 @@ const els = {
   resultHomeButton: document.getElementById("result-home-button"),
   resultLevelup: document.getElementById("result-levelup"),
   resultLevelupTitle: document.getElementById("result-levelup-title"),
+  bookshelfScreen: document.getElementById("bookshelf-screen"),
+  bookshelfBack: document.getElementById("bookshelf-back"),
+  bookshelfSummary: document.getElementById("bookshelf-summary"),
+  bookshelfList: document.getElementById("bookshelf-list"),
+  statsScreen: document.getElementById("stats-screen"),
+  statsBack: document.getElementById("stats-back"),
+  statsTotalXp: document.getElementById("stats-total-xp"),
+  statsLevel: document.getElementById("stats-level"),
+  statsBooks: document.getElementById("stats-books"),
+  statsFinished: document.getElementById("stats-finished"),
+  statsLogs: document.getElementById("stats-logs"),
+  statsStreak: document.getElementById("stats-streak"),
+  statsBestStreak: document.getElementById("stats-best-streak"),
+  statsChart: document.getElementById("stats-chart"),
+  statsRecentLogs: document.getElementById("stats-recent-logs"),
   homeButtons: Array.from(document.querySelectorAll("[data-home]")),
   recentBookTemplate: document.getElementById("recent-book-template"),
 };
@@ -194,12 +209,10 @@ function bindEvents() {
     renderLogScreen();
     showScreen("log");
   });
-  els.bookshelfButton.addEventListener("click", () =>
-    window.alert("My Bookshelf is coming in the next step.")
-  );
-  els.statsButton.addEventListener("click", () =>
-    window.alert("My Stats is coming in the next step.")
-  );
+  els.bookshelfButton.addEventListener("click", () => showScreen("bookshelf"));
+  els.statsButton.addEventListener("click", () => showScreen("stats"));
+  els.bookshelfBack.addEventListener("click", () => showScreen("home"));
+  els.statsBack.addEventListener("click", () => showScreen("home"));
   els.bookMic.addEventListener("click", () => startSpeech("book"));
   els.commentMic.addEventListener("click", () => startSpeech("comment"));
   els.lastBookButton.addEventListener("click", useLastBook);
@@ -325,15 +338,20 @@ function showScreen(name) {
     home: els.homeScreen,
     log: els.logScreen,
     result: els.resultScreen,
+    bookshelf: els.bookshelfScreen,
+    stats: els.statsScreen,
   };
 
   Object.values(map).forEach((screen) => screen.classList.add("hidden"));
   map[name].classList.remove("hidden");
+  window.scrollTo(0, 0);
 
   if (name === "home") renderHomeScreen();
   if (name === "log") renderLogScreen();
   if (name === "result") renderResultScreen();
   if (name === "setup") fillSetupFields();
+  if (name === "bookshelf") renderBookshelfScreen();
+  if (name === "stats") renderStatsScreen();
 }
 
 function renderAll() {
@@ -407,6 +425,166 @@ function renderEnjoyment() {
       Number(button.dataset.enjoyment) === draft.enjoyment
     );
   });
+}
+
+function getBookshelfData() {
+  return state.books
+    .map((book) => {
+      const bookLogs = state.logs.filter(
+        (log) => log.bookTitle === book.title
+      );
+      return {
+        ...book,
+        sessions: bookLogs.length,
+        totalXp: bookLogs.reduce((sum, log) => sum + (log.xpEarned || 0), 0),
+      };
+    })
+    .sort((a, b) => (b.lastReadDate || "").localeCompare(a.lastReadDate || ""));
+}
+
+function getLast7DaysXp() {
+  const today = new Date();
+  const days = [];
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const iso = d.toISOString().slice(0, 10);
+    const xp = state.logs
+      .filter((log) => log.date === iso)
+      .reduce((sum, log) => sum + (log.xpEarned || 0), 0);
+    days.push({
+      iso,
+      label: d.toLocaleDateString("en-US", { weekday: "short" }),
+      xp,
+    });
+  }
+  return days;
+}
+
+function renderBookshelfScreen() {
+  const books = getBookshelfData();
+  const finishedCount = books.filter((b) => b.finished).length;
+  els.bookshelfSummary.textContent = books.length
+    ? `${formatNumber(books.length)} book${
+        books.length === 1 ? "" : "s"
+      } · ${formatNumber(finishedCount)} finished`
+    : "No books yet. Start with Log Today's Read.";
+
+  els.bookshelfList.innerHTML = "";
+  books.forEach((book) => {
+    const card = document.createElement("div");
+    card.className = "book-card";
+    if (book.finished) card.classList.add("book-card-finished");
+
+    const main = document.createElement("div");
+    main.className = "book-card-main";
+
+    const title = document.createElement("h3");
+    title.className = "book-card-title";
+    title.textContent = book.title;
+    main.appendChild(title);
+
+    const meta = document.createElement("p");
+    meta.className = "book-card-meta";
+    meta.textContent = `${formatNumber(book.sessions)} session${
+      book.sessions === 1 ? "" : "s"
+    } · ${formatNumber(book.totalXp)} XP`;
+    main.appendChild(meta);
+
+    const dates = document.createElement("p");
+    dates.className = "book-card-dates";
+    if (book.firstReadDate === book.lastReadDate) {
+      dates.textContent = `Read on ${book.lastReadDate}`;
+    } else {
+      dates.textContent = `${book.firstReadDate} → ${book.lastReadDate}`;
+    }
+    main.appendChild(dates);
+
+    card.appendChild(main);
+
+    if (book.finished) {
+      const badge = document.createElement("span");
+      badge.className = "book-card-badge";
+      badge.textContent = "Finished";
+      card.appendChild(badge);
+    }
+
+    els.bookshelfList.appendChild(card);
+  });
+}
+
+function renderStatsScreen() {
+  const totalXp = state.player.totalXp || 0;
+  const finishedCount = state.books.filter((b) => b.finished).length;
+
+  els.statsTotalXp.textContent = formatNumber(totalXp);
+  els.statsLevel.textContent = `${state.player.level} - ${state.player.title}`;
+  els.statsBooks.textContent = formatNumber(state.books.length);
+  els.statsFinished.textContent = formatNumber(finishedCount);
+  els.statsLogs.textContent = formatNumber(state.logs.length);
+  els.statsStreak.textContent = formatNumber(state.player.currentStreak || 0);
+  els.statsBestStreak.textContent = formatNumber(state.player.bestStreak || 0);
+
+  const days = getLast7DaysXp();
+  const maxXp = Math.max(1, ...days.map((d) => d.xp));
+  els.statsChart.innerHTML = "";
+  days.forEach((day) => {
+    const col = document.createElement("div");
+    col.className = "bar-col";
+
+    const value = document.createElement("span");
+    value.className = "bar-value";
+    value.textContent = day.xp ? formatNumber(day.xp) : "";
+    col.appendChild(value);
+
+    const track = document.createElement("div");
+    track.className = "bar-track";
+    const fill = document.createElement("div");
+    fill.className = "bar-fill";
+    fill.style.height = day.xp ? `${(day.xp / maxXp) * 100}%` : "0%";
+    track.appendChild(fill);
+    col.appendChild(track);
+
+    const label = document.createElement("span");
+    label.className = "bar-label";
+    label.textContent = day.label;
+    col.appendChild(label);
+
+    els.statsChart.appendChild(col);
+  });
+
+  const recent = [...state.logs]
+    .sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""))
+    .slice(0, 5);
+  els.statsRecentLogs.innerHTML = "";
+  if (!recent.length) {
+    const empty = document.createElement("li");
+    empty.className = "recent-log-empty muted";
+    empty.textContent = "No logs yet.";
+    els.statsRecentLogs.appendChild(empty);
+  } else {
+    recent.forEach((log) => {
+      const li = document.createElement("li");
+      li.className = "recent-log";
+      const left = document.createElement("div");
+      left.className = "recent-log-left";
+      const title = document.createElement("strong");
+      title.textContent = log.bookTitle || "(untitled)";
+      const meta = document.createElement("span");
+      meta.className = "recent-log-meta";
+      meta.textContent = log.date + (log.finishedBook ? " · Finished" : "");
+      left.appendChild(title);
+      left.appendChild(meta);
+
+      const right = document.createElement("span");
+      right.className = "recent-log-xp";
+      right.textContent = `+${formatNumber(log.xpEarned || 0)} XP`;
+
+      li.appendChild(left);
+      li.appendChild(right);
+      els.statsRecentLogs.appendChild(li);
+    });
+  }
 }
 
 function renderRecentBooks() {
