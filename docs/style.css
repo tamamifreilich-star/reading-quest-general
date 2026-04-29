@@ -9,7 +9,7 @@
   --brown: #8b6914;
   --blue: #55ffff;
   --purple: #9955ff;
-  --mic: #9955ff;
+  --mic: #22d3ee;
   --line: #d8c6a4;
   --danger: #b64848;
   --shadow: 0 10px 25px rgba(61, 51, 38, 0.12);
@@ -39,7 +39,7 @@ body[data-theme="ocean"] {
   --green: #0284c7;
   --accent-light: #06b6d4;
   --brown: #0e7490;
-  --mic: #06b6d4;
+  --mic: #fb923c;
   --line: #bae6fd;
   --shadow: 0 10px 25px rgba(2, 132, 199, 0.18);
 }
