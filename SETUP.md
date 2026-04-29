@@ -108,6 +108,38 @@
   - **Saved**: C6 サイン波 220ms（高め単音）
 - ブラウザキャッシュ対策として `?v=20260428d` クエリ + `Cache-Control` meta + `.hidden` グローバル化を反映済み
 
+#### Phase 0 続き: テーマ追加（3 種）
+- 既存の `<select>` Theme 1 個を **3 枚のイラスト付きカード**に置換
+- **3 テーマ**: Minecraft（茶+緑・既存）/ Magic Castle（紫+ピンク）/ Ocean Quest（青+シアン）
+- **インライン SVG** でイラスト（外部ファイル不要、テーマで色変更可、脱文字 UI の伏線）
+- `THEMES` 定数で id + name + 10 段階のレベルタイトルを管理
+- `LEVEL_XP` は共通（500/1500/3000/5000/8000/12000/17000/24000/32000）→ XP しきい値はテーマ非依存
+- CSS 変数 `[data-theme="magic"]` / `[data-theme="ocean"]` で配色一括切替
+- `applyTheme()` で `body[data-theme]` 設定 → 全画面即時反映
+- レベルタイトル例: `Wood Pickaxe` ↔ `Spark Apprentice` ↔ `Tiny Fish`（同じ XP でも見た目だけ変わる）
+- Parent Settings からいつでも切替可、子の Total XP / Books / Streak は維持
+- キャッシュバスター `?v=20260429a`
+
+#### Phase 0 完: 脱文字 UI（アイコン化）
+- **SVG スプライト** を `<body>` 直後に配置（10 種：log/bookshelf/stats/mic/home/star/gear/check/trash/repeat）
+- 各ボタンは `<svg><use href="#icon-..."/></svg>` で参照、`currentColor` で色がテーマ追従
+- **Home の 3 大ボタン**:
+  - Log Today's Read → `.action-card-primary`（緑/紫/青の大カード、本+プラスのイラスト + ラベル）
+  - Bookshelf / Stats → `.action-card-secondary`（横並び 2 つ、本棚 / 棒グラフ + 上向き矢印）
+- **Mic ボタン**:
+  - Book mic → アイコン専用 56×56 の紫ボタン（テキストなし）
+  - Comment mic → アイコン + "Start speaking"、録音中は `.recording` クラスでパルスアニメ + "Listening..."
+- **GET XP** → 星アイコン + "GET XP"
+- **Home/Back** → 家アイコンの 44×44 専用ボタン（log / result / bookshelf / stats）
+- **Last Book** → リピート矢印 + 文字
+- **Parent Settings** → 歯車アイコン + 文字
+- **Save setup** → チェックアイコン + 文字
+- **Reset all data** → ゴミ箱アイコン + 文字（赤い border 維持）
+- 子供は読まなくてもアイコンで操作判断可、大人は短いラベルで補助理解
+- `aria-label` を全ボタンに追加（スクリーンリーダー対応）
+- screen-header を flex-start + gap 12px にしてアイコン Home + h2 が左寄せに
+- キャッシュバスター `?v=20260429b`
+
 #### Phase 0 続き: My Bookshelf / My Stats
 - これまで「Coming soon」alert だった 2 ボタンを実装
 - **My Bookshelf**:

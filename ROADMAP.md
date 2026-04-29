@@ -43,8 +43,8 @@
 - [x] **サウンド効果: XP 獲得・Saved・レベルアップで音が出る**（Web Audio 合成、Setup で ON/OFF 切替）
 - [x] **My Bookshelf 画面が動く**（本ごとに sessions / 累計 XP / 期間 / Finished バッジ、最新読書日順）
 - [x] **My Stats 画面が動く**（XP / Level / Books / Finished / Sessions / Streak / Best Streak / 7 日棒グラフ / 直近 5 ログ）
-- [ ] 脱文字 UI: 主要操作がアイコンで分かる（読まなくても押せる）
-- [ ] テーマが最低 **3 つ**選べる（Minecraft 含む、性別年齢偏らない）
+- [x] **テーマが 3 つ選べる**（Minecraft / Magic Castle / Ocean Quest、SVG イラストカード、レベル名・配色がテーマ連動）
+- [x] **脱文字 UI**: 主要操作がアイコンで分かる（読まなくても押せる、SVG スプライト 10 種、Home 3 大ボタンはイラストカード化）
 - [ ] PWA 化: ホーム画面に追加でき、アプリらしく起動する
 - [ ] Export / Import: JSON でバックアップ・復元できる
 - [ ] パスワード保護: 購入者だけアプリ本体に入れる

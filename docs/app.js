@@ -729,10 +729,12 @@ function startSpeech(target) {
   recognition.maxAlternatives = 1;
   currentRecognition = recognition;
 
+  const commentLabel = els.commentMic.querySelector("span");
   if (target === "comment") {
-    els.commentMic.textContent = "Listening...";
+    els.commentMic.classList.add("recording");
+    if (commentLabel) commentLabel.textContent = "Listening...";
   } else {
-    els.bookMic.textContent = "Listening...";
+    els.bookMic.classList.add("recording");
   }
 
   recognition.onresult = (event) => {
@@ -750,8 +752,9 @@ function startSpeech(target) {
 
   recognition.onend = () => {
     currentRecognition = null;
-    els.commentMic.textContent = "Start speaking";
-    els.bookMic.textContent = "Mic";
+    els.commentMic.classList.remove("recording");
+    els.bookMic.classList.remove("recording");
+    if (commentLabel) commentLabel.textContent = "Start speaking";
   };
 
   recognition.start();
