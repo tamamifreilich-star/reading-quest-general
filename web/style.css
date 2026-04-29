@@ -1,9 +1,11 @@
 :root {
   --bg: #f5e6c8;
+  --bg-soft: #f9eed8;
   --panel: #fff7e8;
   --ink: #3d3326;
   --muted: #6e6356;
   --green: #5b8731;
+  --accent-light: #a4cf72;
   --brown: #8b6914;
   --blue: #55ffff;
   --purple: #9955ff;
@@ -13,14 +15,41 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
+body[data-theme="magic"] {
+  --bg: #f3e8ff;
+  --bg-soft: #fdf2f8;
+  --panel: #ffffff;
+  --ink: #4c1d95;
+  --muted: #7e6997;
+  --green: #a855f7;
+  --accent-light: #ec4899;
+  --brown: #ec4899;
+  --line: #e9d5ff;
+  --shadow: 0 10px 25px rgba(124, 58, 237, 0.18);
+}
+
+body[data-theme="ocean"] {
+  --bg: #dbeafe;
+  --bg-soft: #ecfeff;
+  --panel: #ffffff;
+  --ink: #0c4a6e;
+  --muted: #5a7891;
+  --green: #0284c7;
+  --accent-light: #06b6d4;
+  --brown: #0e7490;
+  --line: #bae6fd;
+  --shadow: 0 10px 25px rgba(2, 132, 199, 0.18);
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #f9eed8 0%, var(--bg) 100%);
+  background: linear-gradient(180deg, var(--bg-soft) 0%, var(--bg) 100%);
   color: var(--ink);
+  min-height: 100vh;
 }
 
 .app-shell {
@@ -133,7 +162,7 @@ h2 {
 .progress-fill {
   width: 0;
   height: 100%;
-  background: linear-gradient(90deg, var(--green), var(--blue));
+  background: linear-gradient(90deg, var(--green), var(--accent-light));
   transition: width 0.25s ease;
 }
 
@@ -350,6 +379,76 @@ textarea {
   text-transform: uppercase;
 }
 
+.theme-field {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.theme-field legend {
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.theme-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: #ffffff;
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, background 0.15s ease;
+  user-select: none;
+}
+
+.theme-card:hover {
+  transform: translateY(-2px);
+}
+
+.theme-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-card.selected {
+  border-color: var(--green);
+  background: linear-gradient(180deg, #ffffff, var(--bg-soft));
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.theme-card-illustration {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-card-illustration svg {
+  width: 100%;
+  height: 100%;
+}
+
+.theme-card-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+}
+
 .book-list {
   display: grid;
   gap: 10px;
@@ -455,7 +554,7 @@ textarea {
 
 .bar-fill {
   width: 100%;
-  background: linear-gradient(180deg, var(--green), #a4cf72);
+  background: linear-gradient(180deg, var(--green), var(--accent-light));
   border-radius: 6px;
   transition: height 0.35s ease;
 }
@@ -524,6 +623,15 @@ textarea {
 
   .emoji-row {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .theme-card-illustration {
+    width: 48px;
+    height: 48px;
+  }
+
+  .theme-card-name {
+    font-size: 0.75rem;
   }
 
   .status-row,

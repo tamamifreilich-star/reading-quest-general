@@ -1,18 +1,76 @@
 const STORAGE_KEY = "readingQuest_general_v1";
-const APP_VERSION = "general-mvp-0.3";
+const APP_VERSION = "general-mvp-0.4";
 
-const LEVELS = [
-  { level: 1, xp: 0, title: "Wood Pickaxe" },
-  { level: 2, xp: 500, title: "Stone Miner" },
-  { level: 3, xp: 1500, title: "Iron Crafter" },
-  { level: 4, xp: 3000, title: "Gold Explorer" },
-  { level: 5, xp: 5000, title: "Redstone Reader" },
-  { level: 6, xp: 8000, title: "Emerald Hunter" },
-  { level: 7, xp: 12000, title: "Diamond Digger" },
-  { level: 8, xp: 17000, title: "Netherite Knight" },
-  { level: 9, xp: 24000, title: "Ender Master" },
-  { level: 10, xp: 32000, title: "Dragon Slayer" },
-];
+const LEVEL_XP = [0, 500, 1500, 3000, 5000, 8000, 12000, 17000, 24000, 32000];
+
+const THEMES = {
+  minecraft: {
+    id: "minecraft",
+    name: "Minecraft",
+    titles: [
+      "Wood Pickaxe",
+      "Stone Miner",
+      "Iron Crafter",
+      "Gold Explorer",
+      "Redstone Reader",
+      "Emerald Hunter",
+      "Diamond Digger",
+      "Netherite Knight",
+      "Ender Master",
+      "Dragon Slayer",
+    ],
+  },
+  magic: {
+    id: "magic",
+    name: "Magic Castle",
+    titles: [
+      "Spark Apprentice",
+      "Star Wand",
+      "Moon Crystal",
+      "Sun Crown",
+      "Crystal Reader",
+      "Phoenix Mage",
+      "Dragon Sage",
+      "Time Wizard",
+      "Storm Master",
+      "Archmage",
+    ],
+  },
+  ocean: {
+    id: "ocean",
+    name: "Ocean Quest",
+    titles: [
+      "Tiny Fish",
+      "Reef Explorer",
+      "Sea Turtle",
+      "Dolphin Reader",
+      "Coral Guardian",
+      "Deep Diver",
+      "Pearl Hunter",
+      "Whale Friend",
+      "Kraken Tamer",
+      "Ocean Captain",
+    ],
+  },
+};
+
+function getActiveTheme() {
+  return THEMES[state.config.theme] || THEMES.minecraft;
+}
+
+function getThemeLevels() {
+  const theme = getActiveTheme();
+  return LEVEL_XP.map((xp, index) => ({
+    level: index + 1,
+    xp,
+    title: theme.titles[index],
+  }));
+}
+
+function applyTheme() {
+  const themeId = (state.config && state.config.theme) || "minecraft";
+  document.body.dataset.theme = THEMES[themeId] ? themeId : "minecraft";
+}
 
 const XP_RULES = {
   baseLog: 100,
@@ -121,7 +179,10 @@ const els = {
   setupReward: document.getElementById("setup-reward"),
   setupGoal: document.getElementById("setup-goal"),
   setupLanguage: document.getElementById("setup-language"),
-  setupTheme: document.getElementById("setup-theme"),
+  setupTheme: Array.from(
+    document.querySelectorAll('input[name="setup-theme"]')
+  ),
+  themeCards: Array.from(document.querySelectorAll(".theme-card")),
   setupSound: document.getElementById("setup-sound"),
   setupSave: document.getElementById("setup-save"),
   setupReset: document.getElementById("setup-reset"),
@@ -183,6 +244,7 @@ const draft = {
 init();
 
 function init() {
+  applyTheme();
   bindEvents();
   fillSetupFields();
   renderAll();
@@ -227,6 +289,18 @@ function bindEvents() {
     button.addEventListener("click", () => {
       draft.enjoyment = Number(button.dataset.enjoyment);
       renderEnjoyment();
+    });
+  });
+
+  els.themeCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const value = card.dataset.theme;
+      els.setupTheme.forEach((radio) => {
+        radio.checked = radio.value === value;
+      });
+      els.themeCards.forEach((c) => {
+        c.classList.toggle("selected", c.dataset.theme === value);
+      });
     });
   });
 }
@@ -292,10 +366,12 @@ function saveSetup() {
   state.config.goalPoints =
     Number(els.setupGoal.value || 0) || DEFAULT_GOAL_POINTS;
   state.config.speechLang = els.setupLanguage.value;
-  state.config.theme = els.setupTheme.value;
+  const selectedTheme = els.setupTheme.find((r) => r.checked);
+  state.config.theme = selectedTheme ? selectedTheme.value : "minecraft";
   state.config.soundEnabled = els.setupSound ? els.setupSound.checked : true;
   state.config.initialSetupDone = true;
 
+  applyTheme();
   updatePlayerLevel();
   persistState();
   renderAll();
@@ -308,7 +384,13 @@ function fillSetupFields() {
   els.setupReward.value = state.config.goalName || "";
   els.setupGoal.value = state.config.goalPoints || DEFAULT_GOAL_POINTS;
   els.setupLanguage.value = state.config.speechLang || "en-AU";
-  els.setupTheme.value = state.config.theme || "minecraft";
+  const themeId = state.config.theme || "minecraft";
+  els.setupTheme.forEach((radio) => {
+    radio.checked = radio.value === themeId;
+  });
+  els.themeCards.forEach((card) => {
+    card.classList.toggle("selected", card.dataset.theme === themeId);
+  });
   if (els.setupSound) {
     els.setupSound.checked = state.config.soundEnabled !== false;
   }
@@ -789,14 +871,16 @@ function updatePlayerLevel() {
 }
 
 function getCurrentLevelInfo() {
-  return LEVELS.reduce((acc, level) => {
+  const levels = getThemeLevels();
+  return levels.reduce((acc, level) => {
     if (state.player.totalXp >= level.xp) return level;
     return acc;
-  }, LEVELS[0]);
+  }, levels[0]);
 }
 
 function getNextLevelInfo() {
-  return LEVELS.find((level) => level.xp > state.player.totalXp) || null;
+  const levels = getThemeLevels();
+  return levels.find((level) => level.xp > state.player.totalXp) || null;
 }
 
 function formatNumber(value) {
